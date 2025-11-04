@@ -1,0 +1,9 @@
+#define UDP_PORT_GTP 2152
+#define GTP_VERSION 0x01
+#define GTP_MTYPE 0xff
+#define ETH_TYPE_IPV4 0x0800
+#define IP_PROTO_TCP 8w6
+#define IP_VERSION_4 4w4
+#define PDCP_SN_18 0
+#define IP_PROTO_UDP 17
+#define UDP_PORT_GTP 2152
