@@ -141,7 +141,26 @@ control MyIngress(inout headers hdr,
             return;
         }
 
-        clone_all.apply();
+        bool clone_this_packet = false;
+
+        if (hdr.ipv4.isValid()) {
+            
+            // Por defecto, clonamos todo IPv4...
+            clone_this_packet = true; 
+
+            // Si es mdns, icmpv6 no
+            if (hdr.udp.isValid() && 
+               (hdr.udp.dstPort == 5353 || hdr.udp.srcPort == 5353)) {
+                
+                clone_this_packet = false;
+            }
+        }
+
+        // Clonacion ingress to egress
+        if (clone_this_packet) {
+            clone_packet();
+        }
+
         // Forward: 0->1, 1->0, others drop
         if (standard_metadata.ingress_port == 0) {
             send(1);
@@ -150,8 +169,8 @@ control MyIngress(inout headers hdr,
         } else {
             drop();
         }
+        
     }
-
 }
 
 control MyEgress(inout headers hdr,
@@ -160,10 +179,12 @@ control MyEgress(inout headers hdr,
     apply {
         // Solo clonados
         if (standard_metadata.instance_type  == 1) {
-            // Invalida cabeceras exteriores (outer stack)
-            hdr.ipv4.setInvalid();       // outer IPv4
-            hdr.udp.setInvalid();        // outer UDP (2152)
-            hdr.gtp.setInvalid();
+            if (hdr.gtp.isValid()){
+                // Invalida cabeceras exteriores (outer stack)
+                hdr.ipv4.setInvalid();       // outer IPv4
+                hdr.udp.setInvalid();        // outer UDP (2152)
+                hdr.gtp.setInvalid();
+            }
             standard_metadata.egress_spec = 2;
         }
 
